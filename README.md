@@ -37,10 +37,12 @@ A browser-based React playground and online code editor that allows users to cre
 ## 📸 Screenshots
 
 ### Home Page
-![Home](./screenshots/home.png)
+![Home](<img width="1449" height="790" alt="image" src="https://github.com/user-attachments/assets/da7c653c-92e4-4feb-8214-30b5b08de560" />
+)
 
 ### Editor
-![Editor](./screenshots/editor.png)
+![Editor](<img width="1469" height="790" alt="image" src="https://github.com/user-attachments/assets/1c8cb6ed-1cd5-47a4-a586-339fccf26265" />
+)
 
 ---
 
