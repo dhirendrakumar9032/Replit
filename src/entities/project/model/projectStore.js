@@ -1,0 +1,225 @@
+import { buildProjectPackageJson, createReactBoilerplate } from "@/entities/project/model/projectTemplates";
+
+export const STORAGE_KEY = "react_online_editor_projects_v3";
+const LEGACY_STORAGE_KEYS = ["react_online_editor_projects_v2", "react_online_editor_projects_v1"];
+
+export const ProjectActionTypes = {
+  CREATE: "project/create",
+  DELETE: "project/delete",
+  UPDATE: "project/update",
+  SAVE_SNAPSHOT: "project/saveSnapshot",
+  ADD_DEPENDENCY: "project/addDependency",
+};
+
+function generateId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `project-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function sortProjects(projects) {
+  return [...projects].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+}
+
+function getInitialActiveFile(files, existingActiveFile) {
+  if (existingActiveFile && files[existingActiveFile]) {
+    return existingActiveFile;
+  }
+
+  if (files["/src/App.jsx"]) {
+    return "/src/App.jsx";
+  }
+
+  if (files["/App.jsx"]) {
+    return "/App.jsx";
+  }
+
+  return Object.keys(files)[0] || "/src/App.jsx";
+}
+
+function normalizeDependencies(input) {
+  if (!input || typeof input !== "object") {
+    return {};
+  }
+
+  return Object.entries(input).reduce((accumulator, [name, version]) => {
+    if (!name || !version) {
+      return accumulator;
+    }
+
+    accumulator[name] = version;
+    return accumulator;
+  }, {});
+}
+
+function syncPackageJsonFile(files, projectName, dependencies) {
+  return {
+    ...files,
+    "/package.json": {
+      code: buildProjectPackageJson(projectName, dependencies),
+    },
+  };
+}
+
+function normalizeProject(project) {
+  if (!project || !project.id || !project.name || !project.files) {
+    return null;
+  }
+
+  const dependencies = normalizeDependencies(project.dependencies);
+  const files = syncPackageJsonFile(project.files, project.name, dependencies);
+
+  return {
+    ...project,
+    files,
+    dependencies,
+    activeFile: getInitialActiveFile(files, project.activeFile),
+    createdAt: project.createdAt || new Date().toISOString(),
+    updatedAt: project.updatedAt || new Date().toISOString(),
+  };
+}
+
+function readStorageRecord() {
+  if (typeof localStorage === "undefined") {
+    return null;
+  }
+
+  return localStorage.getItem(STORAGE_KEY) || LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+}
+
+export function loadProjectsFromStorage() {
+  try {
+    const raw = readStorageRecord();
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return sortProjects(parsed.map(normalizeProject).filter(Boolean));
+  } catch (error) {
+    console.error("Unable to parse stored projects", error);
+    return [];
+  }
+}
+
+export function persistProjectsToStorage(projects) {
+  if (typeof localStorage === "undefined") {
+    return;
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+}
+
+export function createProjectEntity(name, existingProjectCount) {
+  const trimmedName = name?.trim();
+  const projectName = trimmedName || `React Project ${existingProjectCount + 1}`;
+  const timestamp = new Date().toISOString();
+  const dependencies = {};
+
+  return {
+    id: generateId(),
+    name: projectName,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    activeFile: "/src/App.jsx",
+    dependencies,
+    files: createReactBoilerplate(projectName, dependencies),
+  };
+}
+
+function withProjectUpdate(projects, projectId, updater) {
+  return sortProjects(
+    projects.map((project) => {
+      if (project.id !== projectId) {
+        return project;
+      }
+
+      return updater(project);
+    })
+  );
+}
+
+export function projectsReducer(state, action) {
+  switch (action.type) {
+    case ProjectActionTypes.CREATE: {
+      return sortProjects([action.payload.project, ...state]);
+    }
+
+    case ProjectActionTypes.DELETE: {
+      return state.filter((project) => project.id !== action.payload.projectId);
+    }
+
+    case ProjectActionTypes.UPDATE: {
+      const { projectId, patch } = action.payload;
+
+      return withProjectUpdate(state, projectId, (project) => {
+        const nextProject = {
+          ...project,
+          ...patch,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const dependencies = normalizeDependencies(nextProject.dependencies);
+        const files = syncPackageJsonFile(nextProject.files || project.files, nextProject.name, dependencies);
+
+        return {
+          ...nextProject,
+          files,
+          dependencies,
+          activeFile: getInitialActiveFile(files, nextProject.activeFile),
+        };
+      });
+    }
+
+    case ProjectActionTypes.SAVE_SNAPSHOT: {
+      const { projectId, snapshot } = action.payload;
+
+      return withProjectUpdate(state, projectId, (project) => {
+        const dependencies = normalizeDependencies(project.dependencies);
+        const files = syncPackageJsonFile(snapshot.files || project.files, project.name, dependencies);
+
+        return {
+          ...project,
+          files,
+          activeFile: getInitialActiveFile(files, snapshot.activeFile || project.activeFile),
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    }
+
+    case ProjectActionTypes.ADD_DEPENDENCY: {
+      const { projectId, packageName, packageVersion } = action.payload;
+
+      if (!packageName || !packageVersion) {
+        return state;
+      }
+
+      return withProjectUpdate(state, projectId, (project) => {
+        const dependencies = {
+          ...normalizeDependencies(project.dependencies),
+          [packageName]: packageVersion,
+        };
+
+        const files = syncPackageJsonFile(project.files, project.name, dependencies);
+
+        return {
+          ...project,
+          dependencies,
+          files,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    }
+
+    default:
+      return state;
+  }
+}
