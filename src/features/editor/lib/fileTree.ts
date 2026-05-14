@@ -1,3 +1,12 @@
+import { isFolderMarkerPath } from "@/features/editor/lib/editorFiles";
+
+export type FileTreeItem = {
+  name: string;
+  path: string;
+  type: "file" | "folder";
+  children: FileTreeItem[];
+};
+
 export function getFileType(filePath) {
   if (filePath.endsWith(".jsx")) {
     return "react";
@@ -46,6 +55,10 @@ export function getFileIconLabel(fileType) {
   return "*";
 }
 
+export function getNodeNameFromPath(path) {
+  return path.replace(/^\/+/, "").split("/").filter(Boolean).pop() || "";
+}
+
 export function getAncestorFolders(path) {
   if (!path) {
     return [];
@@ -61,9 +74,16 @@ export function getAncestorFolders(path) {
   return ancestors;
 }
 
-export function buildFileTree(filePaths) {
+type MutableFileTreeItem = {
+  name: string;
+  path: string;
+  type: "file" | "folder";
+  children: Map<string, MutableFileTreeItem>;
+};
+
+export function buildFileTree(filePaths): FileTreeItem[] {
   const root = {
-    children: new Map(),
+    children: new Map<string, MutableFileTreeItem>(),
   };
 
   for (const filePath of filePaths) {
@@ -75,10 +95,12 @@ export function buildFileTree(filePaths) {
 
     const segments = trimmed.split("/");
     let current = root;
+    const isFolderMarker = isFolderMarkerPath(filePath);
+    const maxIndex = isFolderMarker ? segments.length - 2 : segments.length - 1;
 
-    for (let index = 0; index < segments.length; index += 1) {
+    for (let index = 0; index <= maxIndex; index += 1) {
       const segment = segments[index];
-      const isFile = index === segments.length - 1;
+      const isFile = !isFolderMarker && index === maxIndex;
       const nodePath = `/${segments.slice(0, index + 1).join("/")}`;
 
       if (!current.children.has(segment)) {
@@ -100,10 +122,12 @@ export function buildFileTree(filePaths) {
     }
   }
 
-  const toArray = (childrenMap) =>
+  const toArray = (childrenMap: Map<string, MutableFileTreeItem>): FileTreeItem[] =>
     Array.from(childrenMap.values())
       .map((node) => ({
-        ...node,
+        name: node.name,
+        path: node.path,
+        type: node.type,
         children: node.type === "folder" ? toArray(node.children) : [],
       }))
       .sort((a, b) => {

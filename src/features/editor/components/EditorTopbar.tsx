@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 
-export default function EditorTopbar({ projectId, nameDraft, setNameDraft, onCommitName }) {
+export default function EditorTopbar({ projectName, nameDraft, setNameDraft, onCommitName }) {
   return (
     <header className="editor-topbar">
       <div className="editor-topbar-left">
         <Link className="button ghost" to="/">
           Back to Projects
         </Link>
-        <span className="project-id">{projectId}</span>
+        <span className="project-route-name">{projectName}</span>
       </div>
 
       <input

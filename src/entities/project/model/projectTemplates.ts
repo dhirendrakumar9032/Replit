@@ -160,7 +160,7 @@ export function createReactBoilerplate(projectName, packageDependencies = {}) {
         "}",
       ]),
     },
-    "/index.html": {
+    "/public/index.html": {
       code: indent([
         "<!doctype html>",
         '<html lang="en">',

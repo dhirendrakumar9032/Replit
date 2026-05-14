@@ -7,6 +7,7 @@ async function parseResponse(response, fallbackMessage) {
 }
 
 export async function searchPackages(query) {
+  console.log(`Searching for packages with query: ${query}`);
   const response = await fetch(`/api/packages/search?q=${encodeURIComponent(query)}`);
   const payload = await parseResponse(response, "Package search failed.");
 
@@ -14,6 +15,7 @@ export async function searchPackages(query) {
 }
 
 export async function resolvePackage(packageName) {
+  console.log(`Resolving package: ${packageName}`);
   const response = await fetch(`/api/packages/resolve?name=${encodeURIComponent(packageName)}`);
   const payload = await parseResponse(response, "Unable to resolve package version.");
 

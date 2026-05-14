@@ -20,7 +20,7 @@ function generateId() {
 }
 
 function sortProjects(projects) {
-  return [...projects].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  return [...projects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 function getInitialActiveFile(files, existingActiveFile) {
@@ -63,13 +63,41 @@ function syncPackageJsonFile(files, projectName, dependencies) {
   };
 }
 
+function removeDuplicateBoilerplateFiles(files) {
+  const nextFiles = { ...files };
+
+  if (nextFiles["/src/App.jsx"]) {
+    delete nextFiles["/App.js"];
+    delete nextFiles["/App.jsx"];
+  }
+
+  if (nextFiles["/src/index.jsx"]) {
+    delete nextFiles["/index.js"];
+    delete nextFiles["/index.jsx"];
+  }
+
+  if (nextFiles["/src/style.css"]) {
+    delete nextFiles["/styles.css"];
+  }
+
+  if (nextFiles["/public/index.html"]) {
+    delete nextFiles["/index.html"];
+  }
+
+  return nextFiles;
+}
+
 function normalizeProject(project) {
   if (!project || !project.id || !project.name || !project.files) {
     return null;
   }
 
   const dependencies = normalizeDependencies(project.dependencies);
-  const files = syncPackageJsonFile(project.files, project.name, dependencies);
+  const files = syncPackageJsonFile(
+    removeDuplicateBoilerplateFiles(project.files),
+    project.name,
+    dependencies
+  );
 
   return {
     ...project,
@@ -168,7 +196,11 @@ export function projectsReducer(state, action) {
         };
 
         const dependencies = normalizeDependencies(nextProject.dependencies);
-        const files = syncPackageJsonFile(nextProject.files || project.files, nextProject.name, dependencies);
+        const files = syncPackageJsonFile(
+          removeDuplicateBoilerplateFiles(nextProject.files || project.files),
+          nextProject.name,
+          dependencies
+        );
 
         return {
           ...nextProject,
@@ -184,7 +216,11 @@ export function projectsReducer(state, action) {
 
       return withProjectUpdate(state, projectId, (project) => {
         const dependencies = normalizeDependencies(project.dependencies);
-        const files = syncPackageJsonFile(snapshot.files || project.files, project.name, dependencies);
+        const files = syncPackageJsonFile(
+          removeDuplicateBoilerplateFiles(snapshot.files || project.files),
+          project.name,
+          dependencies
+        );
 
         return {
           ...project,
@@ -208,7 +244,11 @@ export function projectsReducer(state, action) {
           [packageName]: packageVersion,
         };
 
-        const files = syncPackageJsonFile(project.files, project.name, dependencies);
+        const files = syncPackageJsonFile(
+          removeDuplicateBoilerplateFiles(project.files),
+          project.name,
+          dependencies
+        );
 
         return {
           ...project,
