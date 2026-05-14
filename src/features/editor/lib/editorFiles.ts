@@ -1,3 +1,5 @@
+export const FOLDER_MARKER_FILE = ".gitkeep";
+
 export function normalizePath(path) {
   if (!path) {
     return "";
@@ -10,6 +12,20 @@ export function normalizePath(path) {
   }
 
   return `/${clean}`;
+}
+
+export function isFolderMarkerPath(path) {
+  return path.endsWith(`/${FOLDER_MARKER_FILE}`);
+}
+
+export function createFolderMarkerPath(path) {
+  const normalized = normalizePath(path);
+
+  if (!normalized) {
+    return "";
+  }
+
+  return `${normalized.replace(/\/+$/, "")}/${FOLDER_MARKER_FILE}`;
 }
 
 export function createStarterByPath(path) {

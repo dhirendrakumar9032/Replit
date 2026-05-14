@@ -6,7 +6,7 @@ export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<ProjectsPage />} />
-      <Route path="/editor/:projectId" element={<EditorPage />} />
+      <Route path="/editor/:projectSlug" element={<EditorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

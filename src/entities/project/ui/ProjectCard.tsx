@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatDateTime } from "@/shared/lib/date";
+import { getProjectEditorPath } from "@/entities/project/model/projectRoutes";
 
 export default function ProjectCard({ project, onDelete }) {
   return (
@@ -9,7 +10,7 @@ export default function ProjectCard({ project, onDelete }) {
       </div>
       <p>Last updated: {formatDateTime(project.updatedAt)}</p>
       <div className="project-actions">
-        <Link className="button primary" to={`/editor/${project.id}`}>
+        <Link className="button primary" to={getProjectEditorPath(project)}>
           Open Editor
         </Link>
         <button className="button ghost" type="button" onClick={() => onDelete(project.id)}>

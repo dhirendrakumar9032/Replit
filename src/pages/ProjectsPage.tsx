@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProjectCard from "@/entities/project/ui/ProjectCard";
 import { useProjects } from "@/entities/project/model/ProjectsContext";
+import { getProjectEditorPath } from "@/entities/project/model/projectRoutes";
 
 export default function ProjectsPage() {
   const { projects, createProject, deleteProject } = useProjects();
@@ -21,7 +22,7 @@ export default function ProjectsPage() {
 
     const createdProject = createProject(newProjectName);
     setNewProjectName("");
-    navigate(`/editor/${createdProject.id}`);
+    navigate(getProjectEditorPath(createdProject));
   };
 
   const handleDeleteProject = (projectId) => {
