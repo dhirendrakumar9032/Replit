@@ -86,7 +86,7 @@ function syncPackageJsonFile(files, projectName, dependencies, projectType: Proj
   };
 }
 
-function removeDuplicateBoilerplateFiles(files, projectType: ProjectType = PROJECT_TYPES.REACT) {
+export function removeDuplicateBoilerplateFiles(files, projectType: ProjectType = PROJECT_TYPES.REACT) {
   const nextFiles = { ...files };
 
   if (nextFiles["/src/App.jsx"]) {

@@ -10,6 +10,10 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [projectType, setProjectType] = useState(PROJECT_TYPES.REACT);
   const navigate = useNavigate();
+  const reactProjectCount = projects.filter((project) => project.type !== PROJECT_TYPES.JAVASCRIPT).length;
+  const jsProjectCount = projects.filter((project) => project.type === PROJECT_TYPES.JAVASCRIPT).length;
+  const selectedProjectType = PROJECT_TYPE_OPTIONS.find((option) => option.value === projectType);
+  const latestProject = projects[0];
 
   const title = useMemo(() => {
     if (!projects.length) {
@@ -39,52 +43,108 @@ export default function ProjectsPage() {
 
   return (
     <main className="projects-page">
-      <section className="hero">
-        <p className="hero-badge">Online Code Editor</p>
-        <h1>Create React projects or JavaScript playgrounds</h1>
-        <p>
-          Pick a stack, write code with Monaco, preview in Sandpack, and run JavaScript output in the terminal.
-        </p>
-      </section>
+      <header className="dashboard-header">
+        <div>
+          <p className="dashboard-kicker">Stacklivo</p>
+          <h1>Frontend workspace</h1>
+          <p>Manage React projects and JavaScript playgrounds from one focused control room.</p>
+        </div>
 
-      <section className="create-card">
-        <h2>Create New Playground</h2>
-        <form className="create-form" onSubmit={handleCreateProject}>
-          <div className="project-type-options" role="radiogroup" aria-label="Project type">
-            {PROJECT_TYPE_OPTIONS.map((option) => (
-              <label
-                className={`project-type-option ${projectType === option.value ? "active" : ""}`}
-                key={option.value}
-              >
-                <input
-                  checked={projectType === option.value}
-                  name="projectType"
-                  onChange={() => setProjectType(option.value)}
-                  type="radio"
-                  value={option.value}
-                />
-                <span>{option.label}</span>
-                <small>{option.description}</small>
-              </label>
-            ))}
+        <div className="dashboard-stats" aria-label="Workspace summary">
+          <div>
+            <strong>{projects.length}</strong>
+            <span>Total</span>
+          </div>
+          <div>
+            <strong>{reactProjectCount}</strong>
+            <span>React</span>
+          </div>
+          <div>
+            <strong>{jsProjectCount}</strong>
+            <span>JavaScript</span>
+          </div>
+        </div>
+      </header>
+
+      <section className="dashboard-grid">
+        <div className="create-card">
+          <div className="panel-heading">
+            <div>
+              <p>New build</p>
+              <h2>Start clean</h2>
+            </div>
+            <span>{selectedProjectType?.label}</span>
           </div>
 
-          <input
-            type="text"
-            value={newProjectName}
-            onChange={(event) => setNewProjectName(event.target.value)}
-            placeholder="Project name (optional)"
-            maxLength={50}
-          />
-          <button className="button primary" type="submit">
-            + Create
-          </button>
-        </form>
+          <form className="create-form" onSubmit={handleCreateProject}>
+            <div className="project-type-options" role="radiogroup" aria-label="Project type">
+              {PROJECT_TYPE_OPTIONS.map((option) => (
+                <label
+                  className={`project-type-option ${projectType === option.value ? "active" : ""}`}
+                  key={option.value}
+                >
+                  <input
+                    checked={projectType === option.value}
+                    name="projectType"
+                    onChange={() => setProjectType(option.value)}
+                    type="radio"
+                    value={option.value}
+                  />
+                  <span>{option.label}</span>
+                  <small>{option.description}</small>
+                </label>
+              ))}
+            </div>
+
+            <div className="create-row">
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(event) => setNewProjectName(event.target.value)}
+                placeholder="Project name (optional)"
+                maxLength={50}
+              />
+              <button className="button primary" type="submit">
+                Create workspace
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <aside className="workflow-card">
+          <div className="panel-heading">
+            <div>
+              <p>Stack</p>
+              <h2>Included tools</h2>
+            </div>
+          </div>
+          <div className="workflow-list">
+            <div>
+              <span>Editor</span>
+              <strong>Monaco themes</strong>
+            </div>
+            <div>
+              <span>Preview</span>
+              <strong>Sandpack iframe</strong>
+            </div>
+            <div>
+              <span>Run</span>
+              <strong>JS terminal output</strong>
+            </div>
+            <div>
+              <span>Latest</span>
+              <strong>{latestProject ? latestProject.name : "No saved project"}</strong>
+            </div>
+          </div>
+        </aside>
       </section>
 
       <section className="projects-grid-wrap">
         <div className="projects-grid-header">
-          <h2>{title}</h2>
+          <div>
+            <p>Recent work</p>
+            <h2>{title}</h2>
+          </div>
         </div>
 
         {projects.length ? (
@@ -95,7 +155,8 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <p>Start by creating your first React project or JavaScript playground.</p>
+            <strong>No saved work yet</strong>
+            <p>Create a React project or JavaScript playground to start building in Stacklivo.</p>
           </div>
         )}
       </section>

@@ -16,6 +16,7 @@
     "start:api": "node server/index.js"
   },
   "dependencies": {
+    "@babel/standalone": "^7.29.4",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@codesandbox/sandpack-themes": "^2.0.21",
     "@monaco-editor/react": "^4.7.0",
