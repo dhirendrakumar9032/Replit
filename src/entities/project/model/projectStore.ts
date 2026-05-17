@@ -172,15 +172,21 @@ export function persistProjectsToStorage(projects) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
-export function createProjectEntity(name, existingProjectCount, projectType = PROJECT_TYPES.REACT) {
+export function createProjectEntity(name, existingProjectCount, projectType = PROJECT_TYPES.REACT, options = {}) {
   const normalizedProjectType = normalizeProjectType(projectType);
   const trimmedName = name?.trim();
   const fallbackPrefix = normalizedProjectType === PROJECT_TYPES.REACT ? "React Project" : "JS Playground";
   const projectName = trimmedName || `${fallbackPrefix} ${existingProjectCount + 1}`;
   const timestamp = new Date().toISOString();
-  const dependencies = {};
-  const files =
-    normalizedProjectType === PROJECT_TYPES.REACT
+  const dependencies = normalizeDependencies(options.dependencies);
+  const files = options.files
+    ? syncPackageJsonFile(
+        removeDuplicateBoilerplateFiles(options.files, normalizedProjectType),
+        projectName,
+        dependencies,
+        normalizedProjectType
+      )
+    : normalizedProjectType === PROJECT_TYPES.REACT
       ? createReactBoilerplate(projectName, dependencies)
       : createJavaScriptBoilerplate(projectName, dependencies);
 
@@ -190,9 +196,13 @@ export function createProjectEntity(name, existingProjectCount, projectType = PR
     type: normalizedProjectType,
     createdAt: timestamp,
     updatedAt: timestamp,
-    activeFile: normalizedProjectType === PROJECT_TYPES.REACT ? "/src/App.jsx" : "/src/index.js",
+    activeFile: getInitialActiveFile(
+      files,
+      options.activeFile || (normalizedProjectType === PROJECT_TYPES.REACT ? "/src/App.jsx" : "/src/index.js")
+    ),
     dependencies,
     files,
+    practiceQuestionId: options.practiceQuestionId || options.questionId || null,
   };
 }
 
